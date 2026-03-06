@@ -1,13 +1,29 @@
 version: "3.8"
 
 services:
-  purecycle-backend-laravel:
-    container_name: purecycle-backend-laravel
-    build: .
+  nginx-project:
+    container_name: nginx-project
+    image: nginx:alpine
     restart: always
-    ports:
-      - "127.0.0.1:9000:9000"
+    depends_on:
+      - php-project
     volumes:
-      - /home/ubuntu/purecycle/purecycle-backend-laravel:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /home/ubuntu/purecycle/purecycle-backend-laravel:/usr/share/nginx/html
+    ports:
+      - "127.0.0.1:8081:80"
     environment:
-      - TZ=Asia/Manila
+      TZ: Asia/Manila
+
+  php-project:
+    container_name: php-project
+    build: ./php
+    restart: always
+    expose:
+      - "9000"
+    volumes:
+      - /home/ubuntu/purecycle/purecycle-backend-laravel:/usr/share/nginx/html
+    working_dir: /usr/share/nginx/html
+    environment:
+      TZ: Asia/Manila
