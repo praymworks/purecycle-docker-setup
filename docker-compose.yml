@@ -16,9 +16,11 @@ services:
       - ./mysql_data:/var/lib/mysql
       - ./mysql/my.cnf:/etc/mysql/conf.d/my-custom.cnf:ro
     command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - purecycle-db-network
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
     container_name: phpmyadmin80
     restart: unless-stopped
     depends_on:
@@ -26,9 +28,33 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
+      PMA_ARBITRARY: 1
       UPLOAD_LIMIT: 256M
+      MEMORY_LIMIT: 512M
+      MAX_EXECUTION_TIME: 600
+    expose:
+      - "80"
+    networks:
+      - purecycle-db-network
+
+  nginx-phpmyadmin:
+    image: nginx:alpine
+    container_name: nginx-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - phpmyadmin
+    volumes:
+      - ./nginx/phpmyadmin.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/nginx/ssl:/etc/nginx/ssl:ro
     ports:
       - "8080:80"
+      - "8443:443"
+    networks:
+      - purecycle-db-network
 
 volumes:
   mysql_data:
+
+networks:
+  purecycle-db-network:
+    driver: bridge
